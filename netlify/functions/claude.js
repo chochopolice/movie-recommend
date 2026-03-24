@@ -1,5 +1,5 @@
 // netlify/functions/claude.js
-// ブラウザ → この関数 → Anthropic API の順で中継する
+// ブラウザ → この関数 → OpenAI API の順で中継する
 
 exports.handler = async (event) => {
   // CORS プリフライト対応
@@ -20,29 +20,35 @@ exports.handler = async (event) => {
 
     console.log('Received messages:', JSON.stringify(body.messages));
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Content-Type':      'application/json',
-        'x-api-key':         process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model:      body.model      || 'claude-haiku-4-5-20251001',
+        model:    'gpt-4o-mini', // 低コスト・高速
+        messages: body.messages,
         max_tokens: body.max_tokens || 1000,
-        messages:   body.messages,
       }),
     });
 
     const data = await response.json();
 
-    console.log('Anthropic status:', response.status);
-    console.log('Anthropic response:', JSON.stringify(data));
+    console.log('OpenAI status:', response.status);
+    console.log('OpenAI response:', JSON.stringify(data));
+
+    // app.js側がAnthropicフォーマットを期待しているので変換する
+    const converted = {
+      content: [
+        { type: 'text', text: data.choices?.[0]?.message?.content || '' }
+      ]
+    };
 
     return {
       statusCode: response.status,
       headers: corsHeaders(),
-      body: JSON.stringify(data),
+      body: JSON.stringify(converted),
     };
 
   } catch (err) {
