@@ -295,7 +295,17 @@ ${summary}
         messages: [{ role: 'user', content: prompt }]
       })
     });
-    const data   = await res.json();
+    const data = await res.json();
+
+    // デバッグ：レスポンス内容をコンソールに出力
+    console.log('Function response status:', res.status);
+    console.log('Function response data:', JSON.stringify(data));
+
+    if (!res.ok || !data.content) {
+      const errMsg = data?.error?.message || JSON.stringify(data);
+      throw new Error(`API Error ${res.status}: ${errMsg}`);
+    }
+
     const text   = data.content.map(b => b.text || '').join('');
     const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
 
