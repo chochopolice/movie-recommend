@@ -309,19 +309,22 @@ ${summary}
     const text   = data.content.map(b => b.text || '').join('');
     const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
 
-    // TMDb IDからポスター画像を補完
+    // TMDb タイトル検索でポスター・IDを正確に取得
     const recs = await Promise.all(parsed.recommendations.map(async rec => {
-      if (rec.tmdb_id) {
-        try {
-          const r = await fetch(
-            `${TMDB_BASE}/movie/${rec.tmdb_id}?api_key=${TMDB_API_KEY}&language=${LANG}`
-          );
-          if (r.ok) {
-            const d = await r.json();
-            if (d.poster_path) rec.iconUrl = `${TMDB_IMG}${d.poster_path}`;
+      try {
+        const r = await fetch(
+          `${TMDB_BASE}/search/movie?api_key=${TMDB_API_KEY}&language=${LANG}&query=${encodeURIComponent(rec.title)}&year=${rec.year}`
+        );
+        if (r.ok) {
+          const d = await r.json();
+          const hit = d.results?.[0];
+          if (hit) {
+            rec.tmdb_id = hit.id;
+            rec.iconUrl = hit.poster_path ? `${TMDB_IMG}${hit.poster_path}` : null;
+            rec.genre   = (hit.genre_ids || []).map(g => GENRE_MAP[g]).filter(Boolean).join('/') || rec.genre;
           }
-        } catch { /* ポスターなしでフォールバック */ }
-      }
+        }
+      } catch { /* フォールバック */ }
       return rec;
     }));
 
@@ -333,8 +336,21 @@ ${summary}
     const rGrid = document.getElementById('result-grid');
     rGrid.innerHTML = '';
     recs.forEach(rec => {
+      // allMovies風のオブジェクトに変換してモーダルで使えるようにする
+      const movieObj = {
+        id:      String(rec.tmdb_id || rec.title),
+        tmdbId:  rec.tmdb_id,
+        title:   rec.title,
+        year:    rec.year,
+        genre:   rec.genre ? rec.genre.split('/') : [],
+        rating:  rec.rating || '?',
+        iconUrl: rec.iconUrl || null,
+        icon:    rec.icon || '🎬',
+      };
+
       const card = document.createElement('div');
       card.className = 'result-card';
+      card.style.cursor = 'pointer';
       card.innerHTML = `
         <div class="result-card-img">
           ${rec.iconUrl
@@ -348,6 +364,9 @@ ${summary}
           <span class="movie-genre-tag">${rec.genre}</span>
           <div class="result-card-why">${rec.reason}</div>
         </div>`;
+
+      // クリックでモーダル表示
+      card.addEventListener('click', () => openModal(movieObj, null));
       rGrid.appendChild(card);
     });
 
