@@ -285,7 +285,8 @@ ${summary}
 }`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    // Netlify Function 経由で Anthropic API を呼び出す（CORS回避）
+    const res = await fetch('/.netlify/functions/claude', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
