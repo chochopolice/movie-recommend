@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>映画おすすめツール</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="loading-overlay" class="loading-overlay hidden">
+  <div class="spinner"></div>
+  <p class="loading-text" id="loading-text">あなたの好みを分析中...</p>
+</div>
+
+<div id="selection-screen">
+  <header>
+    <h1>🎬 映画おすすめツール</h1>
+    <p>好きな映画を選んでいくと、あなたへのおすすめが見つかります</p>
+  </header>
+  <div class="progress-bar" id="progress-bar"></div>
+  <p class="round-label" id="round-label"></p>
+  <div class="grid" id="movie-grid"></div>
+</div>
+
+<div id="result-screen">
+  <h2>🎯 あなたへのおすすめ映画</h2>
+  <p class="subtitle" id="result-subtitle"></p>
+  <div class="result-grid" id="result-grid"></div>
+  <button class="restart-btn" onclick="restart()">🔄 もう一度やってみる</button>
+</div>
+
+<!-- Movie Detail Modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <button class="btn-close" onclick="closeModal()">✕</button>
+    <div class="modal-header">
+      <div class="modal-poster-placeholder" id="modal-icon"></div>
+      <div>
+        <div class="modal-title" id="modal-title"></div>
+        <div class="modal-meta" id="modal-meta"></div>
+        <div class="modal-stars" id="modal-stars"></div>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section">
+        <label>あらすじ</label>
+        <p id="modal-synopsis"></p>
+      </div>
+      <div class="modal-section">
+        <label>主演</label>
+        <p id="modal-cast"></p>
+      </div>
+      <div class="modal-section">
+        <label>レビュー</label>
+        <p id="modal-review"></p>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="modal-select-btn">この映画を選ぶ ✓</button>
+      <button class="btn btn-secondary" onclick="closeModal()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
