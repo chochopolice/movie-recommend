@@ -286,7 +286,7 @@ ${summary}
 
   try {
     // Netlify Function 経由で Anthropic API を呼び出す（CORS回避）
-    const res = await fetch('https://m1ealaqj6g.execute-api.us-east-1.amazonaws.com', {
+    const res = await fetch('https://m1ealaqj6g.execute-api.us-east-1.amazonaws.com/movie-recommend-api', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
