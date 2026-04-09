@@ -39,6 +39,9 @@
       width: min(1100px, 100%);
       display: grid;
       grid-template-columns: 360px 1fr;
+      grid-template-areas:
+        "panel game"
+        "panel action";
       gap: 18px;
     }
 
@@ -47,7 +50,7 @@
       overscroll-behavior: none;
     }
 
-    .panel, .game-wrap {
+    .panel, .game-wrap, .action-panel {
       background: rgba(19, 26, 46, 0.94);
       border: 1px solid rgba(255, 255, 255, 0.06);
       border-radius: 24px;
@@ -55,7 +58,13 @@
     }
 
     .panel {
+      grid-area: panel;
       padding: 22px;
+    }
+
+    .action-panel {
+      grid-area: action;
+      padding: 18px;
     }
 
     h1 {
@@ -133,7 +142,6 @@
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      margin-top: 14px;
     }
 
     button {
@@ -186,6 +194,7 @@
     }
 
     .game-wrap {
+      grid-area: game;
       padding: 18px;
       display: flex;
       align-items: center;
@@ -348,9 +357,13 @@
     }
 
     @media (max-width: 920px) {
-      .app { grid-template-columns: 1fr; }
-      .panel { order: 2; }
-      .game-wrap { order: 1; }
+      .app {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "panel"
+          "game"
+          "action";
+      }
     }
 
     @media (max-width: 520px) {
@@ -428,11 +441,6 @@
         <div id="status">Press Start</div>
       </div>
 
-      <div class="buttons">
-        <button class="primary" id="startBtn">Start / Pause</button>
-        <button class="danger" id="resetBtn">Reset</button>
-      </div>
-
       <div class="section">
         <div class="section-title">操作</div>
         <div class="help">スマホでは盤面をスワイプして方向変更、軽くタップで開始。PCでは矢印キーでも操作できます。</div>
@@ -455,6 +463,13 @@
 
     <div class="game-wrap">
       <div id="game"></div>
+    </div>
+
+    <div class="action-panel">
+      <div class="buttons">
+        <button class="primary" id="startBtn">Start / Pause</button>
+        <button class="danger" id="resetBtn">Reset</button>
+      </div>
     </div>
   </div>
 
