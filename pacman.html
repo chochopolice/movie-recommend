@@ -634,6 +634,24 @@
       if (state) render();
     }
 
+    function bindPress(el, handler) {
+      let touched = false;
+
+      el.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        touched = true;
+        handler(e);
+        setTimeout(() => {
+          touched = false;
+        }, 400);
+      }, { passive: false });
+
+      el.addEventListener('click', (e) => {
+        if (touched) return;
+        handler(e);
+      });
+    }
+
     function syncTimer() {
       if (timer) clearInterval(timer);
       if (state.running && !state.gameOver && !state.win) {
@@ -776,14 +794,9 @@
     });
 
     document.querySelectorAll('[data-dir]').forEach(btn => {
-      const setDirection = () => {
+      bindPress(btn, () => {
         nextDir = btn.dataset.dir;
-      };
-      btn.addEventListener('click', setDirection);
-      btn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        setDirection();
-      }, { passive: false });
+      });
     });
 
     gameEl.addEventListener('touchstart', (e) => {
@@ -802,27 +815,29 @@
       const dy = touch.clientY - touchStartY;
       const absX = Math.abs(dx);
       const absY = Math.abs(dy);
-      if (Math.max(absX, absY) < 20) return;
+
+      if (Math.max(absX, absY) < 12) {
+        if (!state.running && !state.gameOver && !state.win) {
+          toggleStartPause();
+        }
+        return;
+      }
+
       if (absX > absY) {
         nextDir = dx > 0 ? 'right' : 'left';
       } else {
         nextDir = dy > 0 ? 'down' : 'up';
       }
+
+      if (!state.running && !state.gameOver && !state.win) {
+        toggleStartPause();
+      }
     }, { passive: true });
 
     window.addEventListener('resize', updateCellSize);
 
-    startBtn.addEventListener('click', toggleStartPause);
-    startBtn.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      toggleStartPause();
-    }, { passive: false });
-
-    resetBtn.addEventListener('click', resetGame);
-    resetBtn.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      resetGame();
-    }, { passive: false });
+    bindPress(startBtn, toggleStartPause);
+    bindPress(resetBtn, resetGame);
 
     updateCellSize();
     resetGame();
