@@ -192,6 +192,9 @@
       justify-content: center;
       overflow: auto;
       position: relative;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     #game {
@@ -380,6 +383,9 @@
         display: grid;
         grid-template-columns: 1fr 1fr;
       }
+      .section .controls {
+        display: none;
+      }
       .arrow {
         width: 64px;
         height: 64px;
@@ -429,7 +435,7 @@
 
       <div class="section">
         <div class="section-title">操作</div>
-        <div class="help">矢印キー、または下のボタンで方向変更。スペースキーで一時停止。</div>
+        <div class="help">スマホでは盤面をスワイプして方向変更、軽くタップで開始。PCでは矢印キーでも操作できます。</div>
         <div class="controls">
           <div class="row"><button class="arrow" data-dir="up">↑</button></div>
           <div class="row">
@@ -442,7 +448,7 @@
 
       <div class="footer-note">
         青い大玉を取ると、しばらくの間だけゴーストを食べられます。<br>
-        スマホでは <strong>スワイプ操作</strong> と画面下の方向ボタンの両方に対応しています。<br>
+        スマホでは <strong>盤面スワイプがメイン操作</strong> です。軽くタップすると開始し、スワイプで方向転換します。<br>
         このファイルを <strong>index.html</strong> として保存すれば、そのままブラウザで遊べます。
       </div>
     </div>
@@ -493,8 +499,9 @@
     let state;
     let nextDir = 'left';
     let timer = null;
-    let touchStartX = 0;
-    let touchStartY = 0;
+    let pointerStartX = 0;
+    let pointerStartY = 0;
+    let activePointerId = null;
 
     function cloneMap(map) {
       return map.map(row => row.split(''));
@@ -799,24 +806,13 @@
       });
     });
 
-    gameEl.addEventListener('touchstart', (e) => {
-      const touch = e.touches[0];
-      touchStartX = touch.clientX;
-      touchStartY = touch.clientY;
-    }, { passive: true });
-
-    gameEl.addEventListener('touchmove', (e) => {
-      e.preventDefault();
-    }, { passive: false });
-
-    gameEl.addEventListener('touchend', (e) => {
-      const touch = e.changedTouches[0];
-      const dx = touch.clientX - touchStartX;
-      const dy = touch.clientY - touchStartY;
+    function handleBoardGestureEnd(clientX, clientY) {
+      const dx = clientX - pointerStartX;
+      const dy = clientY - pointerStartY;
       const absX = Math.abs(dx);
       const absY = Math.abs(dy);
 
-      if (Math.max(absX, absY) < 12) {
+      if (Math.max(absX, absY) < 14) {
         if (!state.running && !state.gameOver && !state.win) {
           toggleStartPause();
         }
@@ -832,7 +828,23 @@
       if (!state.running && !state.gameOver && !state.win) {
         toggleStartPause();
       }
-    }, { passive: true });
+    }
+
+    gameEl.addEventListener('pointerdown', (e) => {
+      activePointerId = e.pointerId;
+      pointerStartX = e.clientX;
+      pointerStartY = e.clientY;
+    });
+
+    gameEl.addEventListener('pointerup', (e) => {
+      if (activePointerId !== null && e.pointerId !== activePointerId) return;
+      handleBoardGestureEnd(e.clientX, e.clientY);
+      activePointerId = null;
+    });
+
+    gameEl.addEventListener('pointercancel', () => {
+      activePointerId = null;
+    });
 
     window.addEventListener('resize', updateCellSize);
 
