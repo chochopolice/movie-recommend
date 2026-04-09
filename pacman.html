@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Pac-Man風 Webゲーム</title>
   <style>
     :root {
@@ -40,6 +40,11 @@
       display: grid;
       grid-template-columns: 360px 1fr;
       gap: 18px;
+    }
+
+    html, body {
+      touch-action: manipulation;
+      overscroll-behavior: none;
     }
 
     .panel, .game-wrap {
@@ -142,6 +147,8 @@
       font-weight: 700;
       cursor: pointer;
       transition: transform 0.12s ease, opacity 0.12s ease, background 0.12s ease;
+      touch-action: manipulation;
+      min-height: 44px;
     }
 
     button:hover { opacity: 0.96; }
@@ -155,6 +162,9 @@
       display: grid;
       place-items: center;
       gap: 8px;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
     }
 
     .row {
@@ -181,6 +191,7 @@
       align-items: center;
       justify-content: center;
       overflow: auto;
+      position: relative;
     }
 
     #game {
@@ -191,6 +202,7 @@
       display: grid;
       gap: 0;
       box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.35);
+      touch-action: none;
     }
 
     .cell {
@@ -339,15 +351,43 @@
     }
 
     @media (max-width: 520px) {
-      body { padding: 12px; }
-      .panel, .game-wrap { border-radius: 18px; }
-      .stats { grid-template-columns: 1fr; }
-      .cell { width: 22px; height: 22px; }
-      .player, .ghost { width: 16px; height: 16px; }
-      .ghost-body { width: 16px; height: 13px; }
-      .eyes { top: 5px; left: 3px; gap: 3px; }
-      .eye { width: 3px; height: 5px; }
-      .power { width: 11px; height: 11px; }
+      body {
+        padding: 8px;
+        align-items: stretch;
+      }
+      .app {
+        gap: 10px;
+      }
+      .panel, .game-wrap {
+        border-radius: 18px;
+      }
+      .panel {
+        padding: 14px;
+      }
+      h1 {
+        font-size: 24px;
+      }
+      .stats {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .stat {
+        padding: 10px;
+      }
+      .stat .value {
+        font-size: 22px;
+      }
+      .buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+      .arrow {
+        width: 64px;
+        height: 64px;
+        font-size: 26px;
+      }
+      .footer-note {
+        font-size: 12px;
+      }
     }
   </style>
 </head>
@@ -402,6 +442,7 @@
 
       <div class="footer-note">
         青い大玉を取ると、しばらくの間だけゴーストを食べられます。<br>
+        スマホでは <strong>スワイプ操作</strong> と画面下の方向ボタンの両方に対応しています。<br>
         このファイルを <strong>index.html</strong> として保存すれば、そのままブラウザで遊べます。
       </div>
     </div>
@@ -412,7 +453,7 @@
   </div>
 
   <script>
-    const CELL = 30;
+    let CELL = 30;
     const TICK_MS = 180;
     const RAW_MAP = [
       '###############',
@@ -452,6 +493,8 @@
     let state;
     let nextDir = 'left';
     let timer = null;
+    let touchStartX = 0;
+    let touchStartY = 0;
 
     function cloneMap(map) {
       return map.map(row => row.split(''));
@@ -581,6 +624,14 @@
       const progress = Math.round(((state.totalDots - state.remainingDots) / state.totalDots) * 100);
       progressBarEl.style.width = progress + '%';
       progressTextEl.textContent = progress + '%';
+    }
+
+    function updateCellSize() {
+      const cols = RAW_MAP[0].length;
+      const available = Math.min(window.innerWidth - 40, 560);
+      const base = Math.floor((available - 24) / cols);
+      CELL = Math.max(20, Math.min(30, base));
+      if (state) render();
     }
 
     function syncTimer() {
@@ -725,14 +776,55 @@
     });
 
     document.querySelectorAll('[data-dir]').forEach(btn => {
-      btn.addEventListener('click', () => {
+      const setDirection = () => {
         nextDir = btn.dataset.dir;
-      });
+      };
+      btn.addEventListener('click', setDirection);
+      btn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        setDirection();
+      }, { passive: false });
     });
 
-    startBtn.addEventListener('click', toggleStartPause);
-    resetBtn.addEventListener('click', resetGame);
+    gameEl.addEventListener('touchstart', (e) => {
+      const touch = e.touches[0];
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+    }, { passive: true });
 
+    gameEl.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+    }, { passive: false });
+
+    gameEl.addEventListener('touchend', (e) => {
+      const touch = e.changedTouches[0];
+      const dx = touch.clientX - touchStartX;
+      const dy = touch.clientY - touchStartY;
+      const absX = Math.abs(dx);
+      const absY = Math.abs(dy);
+      if (Math.max(absX, absY) < 20) return;
+      if (absX > absY) {
+        nextDir = dx > 0 ? 'right' : 'left';
+      } else {
+        nextDir = dy > 0 ? 'down' : 'up';
+      }
+    }, { passive: true });
+
+    window.addEventListener('resize', updateCellSize);
+
+    startBtn.addEventListener('click', toggleStartPause);
+    startBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      toggleStartPause();
+    }, { passive: false });
+
+    resetBtn.addEventListener('click', resetGame);
+    resetBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      resetGame();
+    }, { passive: false });
+
+    updateCellSize();
     resetGame();
   </script>
 </body>
